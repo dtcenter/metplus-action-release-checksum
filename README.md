@@ -13,6 +13,8 @@ None.
 
 ## Example usage
 
+Create a new workflow YAML file in .github/workflows and add the following:
+
 ```
 name: Add checksum to release
 
@@ -28,4 +30,5 @@ jobs:
       - uses: dtcenter/metplus-action-release-checksum@v1
         with:
           token: ${{ secrets.METPLUS_BOT_TOKEN }}
+
 ```
