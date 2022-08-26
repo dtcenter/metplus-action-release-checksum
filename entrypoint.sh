@@ -5,7 +5,8 @@ ref=${GITHUB_REF}
 tag=`basename ${ref}`
 event_name=${GITHUB_EVENT_NAME}
 dl_filename=`basename ${repository}`-${tag}
-cs_filename=checksum.txt
+cs_tar_filename=checksum_tar.txt
+cs_zip_filename=checksum_zip.txt
 
 echo GitHub repository: ${repository}
 echo GitHub ref: ${ref}
@@ -32,12 +33,15 @@ curl -LJO https://github.com/${repository}/archive/${ref}.tar.gz
 [ -s ${dl_filename}.tar.gz ] || (echo ERROR: Could not get tar.gz file && exit 1)
 
 # create checksum from both files
-echo Creating $cs_filename with checksums
-sha256sum ${dl_filename}.zip > $cs_filename
-sha256sum ${dl_filename}.tar.gz >> $cs_filename
+echo Creating $cs_zip_filename with checksums for ZIP file
+sha256sum ${dl_filename}.zip > $cs_zip_filename
+
+echo Creating $cs_tar_filename with checksums for TAR file
+sha256sum ${dl_filename}.tar.gz > $cs_tar_filename
 
 # print checksum values
-cat $cs_filename
+cat $cs_zip_filename
+cat $cs_tar_filename
 
 ###
 # Upload or replace asset
@@ -55,29 +59,31 @@ CURL_ARGS="-LJO#"
 # Validate token
 curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
 
-# Read asset tags
-response=$(curl -sH "$AUTH" $GH_TAGS)
+for cs_filename in $cs_tar_filename $cs_zip_filename; do
+    # Read asset tags
+    response=$(curl -sH "$AUTH" $GH_TAGS)
 
-# Get ID of the release
-eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
-[ "$id" ] || { echo "Error: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
-release_id="$id"
+    # Get ID of the release
+    eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    [ "$id" ] || { echo "Error: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
+    release_id="$id"
 
-# Get ID of the asset based on checksum filename
-id=""
-eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
-assert_id="$id"
-if [ "$assert_id" = "" ]; then
-    echo "No need to overwrite asset"
-else
-    echo "Deleting asset($assert_id)... "
-    curl "$GITHUB_OAUTH_BASIC" -X "DELETE" -H "$AUTH" "https://api.github.com/repos/$repository/releases/assets/$assert_id"
-fi
+    # Get ID of the asset based on checksum filename
+    id=""
+    eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    assert_id="$id"
+    if [ "$assert_id" = "" ]; then
+        echo "No need to overwrite asset"
+    else
+        echo "Deleting asset($assert_id)... "
+        curl "$GITHUB_OAUTH_BASIC" -X "DELETE" -H "$AUTH" "https://api.github.com/repos/$repository/releases/assets/$assert_id"
+    fi
 
-# Upload asset
-echo "Uploading asset... "
+    # Upload asset
+    echo "Uploading asset... "
 
-# Construct url
-GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
+    # Construct url
+    GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
 
-curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
+    curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
+done
