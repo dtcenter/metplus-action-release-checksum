@@ -21,12 +21,15 @@ fi
 ###
 
 # download the assets containing the source code - zip and tar gz
+echo curl -LJO https://github.com/${repository}/archive/${ref}.zip
 curl -LJO https://github.com/${repository}/archive/${ref}.zip
+
+echo curl -LJO https://github.com/${repository}/archive/${ref}.tar.gz
 curl -LJO https://github.com/${repository}/archive/${ref}.tar.gz
 
 # check that files were downloaded correctly and match expected name
-ls ${dl_filename}.zip
-ls ${dl_filename}.tar.gz
+[ -s ${dl_filename}.zip ] || (echo ERROR: Could not get zip file && exit 1)
+[ -s ${dl_filename}.tar.gz ] || (echo ERROR: Could not get tar.gz file && exit 1)
 
 # create checksum from both files
 echo Creating $cs_filename with checksums
@@ -77,5 +80,3 @@ echo "Uploading asset... "
 GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
 
 curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
-
-echo end
