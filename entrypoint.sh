@@ -41,6 +41,7 @@ cat $cs_filename
 
 ###
 # Upload or replace asset
+# logic modified from https://gist.github.com/stefanbuck/ce788fee19ab6eb0b4447a85fc99f447
 ###
 
 # variables for curl commands to upload asset to release
