@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/sh
 
 # if INPUT_DOCKER_NAME is set, then run docker login
 if [ -z ${INPUT_TOKEN+x} ]; then
