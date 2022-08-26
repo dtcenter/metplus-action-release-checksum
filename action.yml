@@ -1,0 +1,12 @@
+name: 'Add Checksum to Release'
+description: 'Generate checksums for release downloads and add to release as asset'
+inputs:
+  token:
+    description: 'GitHub token'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.token }}
