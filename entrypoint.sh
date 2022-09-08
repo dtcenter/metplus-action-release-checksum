@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 repository=${GITHUB_REPOSITORY}
 ref=${GITHUB_REF}
