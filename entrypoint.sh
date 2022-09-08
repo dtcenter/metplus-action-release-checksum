@@ -59,6 +59,7 @@ CURL_ARGS="-LJO#"
 # Validate token
 curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
 
+status=0
 for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Read asset tags
     response=$(curl -sH "$AUTH" $GH_TAGS)
@@ -85,5 +86,13 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Construct url
     GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
 
-    curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET  || { echo "Error: Could not upload asset ${cs_filename}! Must provide a GitHub token from a user with write access";  exit 1; }
+    curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
+    if [ $? != 0 ]; then
+	status=1
+    fi
 done
+
+if [ $status != 0 ]; then
+    echo "Error: Could not upload asset! Must provide a GitHub token from a user with write access"
+    exit 1
+fi
