@@ -52,12 +52,16 @@ cat $cs_tar_filename
 GH_API="https://api.github.com"
 GH_REPO="$GH_API/repos/$repository"
 GH_TAGS="$GH_REPO/releases/tags/$tag"
+GH_ACCESS="$GH_REPO/collaborators/metplus-bot/permission"
 AUTH="Authorization: token ${INPUT_TOKEN}"
 WGET_ARGS="--content-disposition --auth-no-challenge --no-cookie"
 CURL_ARGS="-LJO#"
 
 # Validate token
 curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "ERROR: Invalid repo, token or network issue!";  exit 1; }
+
+# check if metplus-bot user has push access
+curl -sH "$AUTH" $GH_ACCESS | grep -A5 "permissions.:" | grep push | grep true || { echo "ERROR: User metplus-bot must have write access to $repository!";  exit 1; }
 
 status=0
 for cs_filename in $cs_tar_filename $cs_zip_filename; do
