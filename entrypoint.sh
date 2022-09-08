@@ -63,7 +63,6 @@ curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "ERROR: Invalid repo, token or 
 # check if metplus-bot user has push access
 curl -sH "$AUTH" $GH_ACCESS | grep -A5 "permissions.:" | grep push | grep true || { echo "ERROR: User metplus-bot must have write access to $repository!";  exit 1; }
 
-status=0
 for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Read asset tags
     response=$(curl -sH "$AUTH" $GH_TAGS)
@@ -92,18 +91,4 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
 
     curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
 
-    # Check if asset was uploaded properly
-    response=$(curl -sH "$AUTH" $GH_TAGS)
-    id=""
-    eval $(echo "$response" | grep -C2 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
-    assert_id="$id"
-    if [ "$assert_id" != "" ]; then
-        echo "ERROR: Could not upload asset ${cs_filename}"
-	status=1
-    fi
 done
-
-if [ $status != 0 ]; then
-    echo "ERROR: Could not upload asset! Must provide a GitHub token from a user with write access"
-    exit 1
-fi
