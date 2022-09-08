@@ -71,7 +71,7 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
 
     # Get ID of the asset based on checksum filename
     id=""
-    eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    eval $(echo "$response" | grep -C2 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
     assert_id="$id"
     if [ "$assert_id" = "" ]; then
         echo "No need to overwrite asset"
@@ -91,7 +91,7 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Check if asset was uploaded properly
     echo RESPONSE: $response
     id=""
-    eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    eval $(echo "$response" | grep -C2 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
     assert_id="$id"
     if [ "$assert_id" != "" ]; then
         echo "ERROR: Could not upload asset ${cs_filename}"
