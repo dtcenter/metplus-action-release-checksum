@@ -52,12 +52,16 @@ cat $cs_tar_filename
 GH_API="https://api.github.com"
 GH_REPO="$GH_API/repos/$repository"
 GH_TAGS="$GH_REPO/releases/tags/$tag"
+GH_ACCESS="$GH_REPO/collaborators/metplus-bot/permission"
 AUTH="Authorization: token ${INPUT_TOKEN}"
 WGET_ARGS="--content-disposition --auth-no-challenge --no-cookie"
 CURL_ARGS="-LJO#"
 
 # Validate token
-curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
+curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "ERROR: Invalid repo, token or network issue!";  exit 1; }
+
+# check if metplus-bot user has push access
+curl -sH "$AUTH" $GH_ACCESS | grep -A5 "permissions.:" | grep push | grep true || { echo "ERROR: User metplus-bot must have write access to $repository!";  exit 1; }
 
 for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Read asset tags
@@ -65,12 +69,12 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
 
     # Get ID of the release
     eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
-    [ "$id" ] || { echo "Error: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
+    [ "$id" ] || { echo "ERROR: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
     release_id="$id"
 
     # Get ID of the asset based on checksum filename
     id=""
-    eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    eval $(echo "$response" | grep -C2 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
     assert_id="$id"
     if [ "$assert_id" = "" ]; then
         echo "No need to overwrite asset"
