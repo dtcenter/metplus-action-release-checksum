@@ -57,7 +57,7 @@ WGET_ARGS="--content-disposition --auth-no-challenge --no-cookie"
 CURL_ARGS="-LJO#"
 
 # Validate token
-curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "Error: Invalid repo, token or network issue!";  exit 1; }
+curl -o /dev/null -sH "$AUTH" $GH_REPO || { echo "ERROR: Invalid repo, token or network issue!";  exit 1; }
 
 status=0
 for cs_filename in $cs_tar_filename $cs_zip_filename; do
@@ -66,7 +66,7 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
 
     # Get ID of the release
     eval $(echo "$response" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
-    [ "$id" ] || { echo "Error: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
+    [ "$id" ] || { echo "ERROR: Failed to get release id for tag: $tag"; echo "$response" | awk 'length($0)<100' >&2; exit 1; }
     release_id="$id"
 
     # Get ID of the asset based on checksum filename
@@ -87,12 +87,18 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
     GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
 
     curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
-    if [ $? != 0 ]; then
+
+    # Check if asset was uploaded properly
+    id=""
+    eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
+    assert_id="$id"
+    if [ "$assert_id" != "" ]; then
+        echo "ERROR: Could not upload asset ${cs_filename}"
 	status=1
     fi
 done
 
 if [ $status != 0 ]; then
-    echo "Error: Could not upload asset! Must provide a GitHub token from a user with write access"
+    echo "ERROR: Could not upload asset! Must provide a GitHub token from a user with write access"
     exit 1
 fi
