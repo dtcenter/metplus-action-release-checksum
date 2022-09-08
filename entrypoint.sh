@@ -89,6 +89,7 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
     curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
 
     # Check if asset was uploaded properly
+    echo RESPONSE: $response
     id=""
     eval $(echo "$response" | grep -C1 "name.:.\+$cs_filename" | grep -m 1 "id.:" | grep -w id | tr : = | tr -cd '[[:alnum:]]=')
     assert_id="$id"
