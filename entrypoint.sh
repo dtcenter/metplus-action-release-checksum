@@ -4,7 +4,7 @@ repository=${GITHUB_REPOSITORY}
 ref=${GITHUB_REF}
 tag=`basename ${ref}`
 event_name=${GITHUB_EVENT_NAME}
-dl_filename=`basename ${repository}`-${tag}
+dl_filename=`basename ${repository}`-`echo ${tag} | sed -r 's/^v//g'`
 cs_tar_filename=checksum_tar.txt
 cs_zip_filename=checksum_zip.txt
 
