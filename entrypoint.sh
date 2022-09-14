@@ -29,8 +29,14 @@ echo curl -LJO https://github.com/${repository}/archive/${ref}.tar.gz
 curl -LJO https://github.com/${repository}/archive/${ref}.tar.gz
 
 # check that files were downloaded correctly and match expected name
-[ -s ${dl_filename}.zip ] || (echo ERROR: Could not get zip file && exit 1)
-[ -s ${dl_filename}.tar.gz ] || (echo ERROR: Could not get tar.gz file && exit 1)
+if [ ! -s ${dl_filename}.zip ]; then
+    echo "ERROR: Could not get zip file: ${dl_filename}.zip"
+    exit 1
+fi
+if [ ! -s ${dl_filename}.tar.gz ]; then
+    echo "ERROR: Could not get tar.gz file: ${dl_filename}.tar.gz"
+    exit 1
+fi
 
 # create checksum from both files
 echo Creating $cs_zip_filename with checksums for ZIP file
