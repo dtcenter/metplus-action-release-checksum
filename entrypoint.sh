@@ -86,7 +86,7 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
         echo "No need to overwrite asset"
     else
         echo "Deleting asset($assert_id)... "
-        curl "$GITHUB_OAUTH_BASIC" -X "DELETE" -H "$AUTH" "https://api.github.com/repos/$repository/releases/assets/$assert_id"
+        curl -X "DELETE" -H "$AUTH" "https://api.github.com/repos/$repository/releases/assets/$assert_id"
     fi
 
     # Upload asset
@@ -95,5 +95,5 @@ for cs_filename in $cs_tar_filename $cs_zip_filename; do
     # Construct url
     GH_ASSET="https://uploads.github.com/repos/$repository/releases/$release_id/assets?name=$(basename $cs_filename)"
 
-    curl "$GITHUB_OAUTH_BASIC" --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
+    curl --data-binary @"$cs_filename" -H "$AUTH" -H "Content-Type: application/octet-stream" $GH_ASSET
 done
